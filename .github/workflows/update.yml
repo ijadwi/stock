@@ -1,25 +1,52 @@
-name: update-data
+name: update-and-deploy
 on:
   schedule:
-    - cron: "*/15 13-21 * * 1-5"   # كل 15 دقيقة أثناء ساعات السوق الأمريكي (UTC)
-    - cron: "30 22 * * 1-5"        # بعد الإغلاق
-  workflow_dispatch: {}            # زر «Run workflow» للتشغيل اليدوي
+    - cron: "*/15 13-21 * * 1-5"   # كل 15 دقيقة أثناء السوق الأمريكي: تحديث شموع القائمة + نشر الموقع
+    - cron: "30 22 * * 1-5"        # بعد الإغلاق: فحص كل الأسهم الأمريكية ثم النشر
+  workflow_dispatch:
+    inputs:
+      screen:
+        description: "فحص كل السوق (يستغرق 15-40 دقيقة)"
+        type: boolean
+        default: true
 permissions:
   contents: write
+  pages: write
+  id-token: write
 concurrency:
-  group: update-data
+  group: pages
   cancel-in-progress: false
 jobs:
-  fetch:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: node scripts/fetch.mjs
-      - name: Commit data
+      - name: فحص كل السوق
+        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '30 22 * * 1-5') || (github.event_name == 'workflow_dispatch' && inputs.screen) }}
         run: |
+          node scripts/universe.mjs
+          node scripts/screen.mjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
-          git diff --cached --quiet || (git commit -m "update data" && git push)
+          git add data/universe.json data/screen.json
+          git diff --cached --quiet || (git commit -m "market screen" && git push)
+      - name: جلب شموع القائمة
+        run: node scripts/fetch.mjs
+      - name: تجهيز الموقع
+        run: |
+          cp index.html _site/
+          cp data/universe.json data/screen.json _site/data/
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
