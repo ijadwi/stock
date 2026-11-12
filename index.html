@@ -362,13 +362,18 @@ const WL0=["NVDA","TSLA","AAPL","AMD","AMZN","MSFT","META","GOOGL","SPY","QQQ","
 const getW=()=>{try{return JSON.parse(localStorage.getItem("wl_v1"))||[]}catch(e){return[]}};
 const addW=s=>{try{const w=getW();if(!w.includes(s)){w.push(s);localStorage.setItem("wl_v1",JSON.stringify(w))}}catch(e){}};
 const wlist=()=>[...new Set([...WL0,...BANKS.map(b=>b.ticker),...getW(),...Object.keys(FAV.open)])];
+const FAILT={};
+const PUBX=[u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),u=>"https://corsproxy.io/?url="+encodeURIComponent(u)];
+async function tryJSON(url,ms){const c=new AbortController(),tm=setTimeout(()=>c.abort(),ms||9000);try{const r=await fetch(url,{signal:c.signal,cache:"no-store"});if(!r.ok)return{st:r.status};return{j:await r.json()}}catch(e){return{st:0}}finally{clearTimeout(tm)}}
+async function chartJSON(s,range){
+  if(!HAS_PX){const a=await tryJSON("data/"+s.replace(/[^A-Za-z0-9.\-]/g,"_")+".json",6000);if(a.j&&a.j.chart)return a.j}
+  if(FAILT[s]&&Date.now()-FAILT[s]<6e5)throw new Error("تعذّر جلب "+s+" (أُعيدت المحاولة قبل قليل، سأحاول لاحقاً)");
+  const y="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(s)+"?range="+range+"&interval=1d&includePrePost=false";
+  if(HAS_PX){const a=await tryJSON(PROXY+"/chart?symbol="+encodeURIComponent(s)+"&range="+range);if(a.j&&a.j.chart)return a.j;FAILT[s]=Date.now();throw new Error("الوسيط لم يرد ("+(a.st||"اتصال")+") للرمز "+s)}
+  for(const u of [y,...PUBX.map(f=>f(y))]){const a=await tryJSON(u);if(a.j&&a.j.chart)return a.j}
+  FAILT[s]=Date.now();throw new Error("تعذّر جلب "+s+" — لا يوجد ملف محفوظ له والاتصال المباشر محجوب. جرّب مرة أخرى بعد قليل أو أضفه إلى symbols.txt")}
 async function yChart(s,range){
-  let r=null;
-  if(!HAS_PX){try{const q=await fetch("data/"+s.replace(/[^A-Za-z0-9.\-]/g,"_")+".json",{cache:"no-store"});if(q.ok)r=q}catch(e){}}
-  if(!r){try{r=await fetch(HAS_PX?PROXY+"/chart?symbol="+encodeURIComponent(s)+"&range="+range:"https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(s)+"?range="+range+"&interval=1d&includePrePost=false")}
-  catch(e){throw new Error(HAS_PX?"تعذّر الاتصال بالوسيط — تحقق من رابط الوسيط":"لا توجد بيانات محفوظة للرمز "+s+" — أضفه إلى ملف symbols.txt في GitHub وانتظر التحديث القادم")}}
-  if(!r.ok)throw new Error((HAS_PX?"الوسيط ":"Yahoo ")+r.status+" ("+s+")");
-  const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+  const j=await chartJSON(s,range),res=j.chart&&j.chart.result&&j.chart.result[0];
   if(!res)throw new Error((j.chart&&j.chart.error&&j.chart.error.description)||"رمز غير موجود: "+s);
   const m=res.meta||{},q=res.indicators.quote[0],ts=res.timestamp||[],ix=[];
   ts.forEach((t,i)=>{if(q.close[i]!=null)ix.push(i)});
@@ -381,6 +386,12 @@ async function pullYahoo(){const L=wlist(),R=await Promise.allSettled(L.map(s=>y
   if(!ok.length)throw new Error((R[0]&&R[0].reason&&R[0].reason.message||"")+" — تعذر الاتصال بـ Yahoo (قد يمنعه المتصفح CORS). جرّب Alpha Vantage أو افتح الملف من خادم محلي.");
   const bad=L.filter((s,i)=>R[i].status==="rejected");window.bad=bad.length?"ℹ️ لم تتوفر أسعار: "+bad.join("، "):"";return ok}
 const VOLC={};
+let UNI=[],UNIS=new Set(),SCR=null;
+fetch("data/universe.json",{cache:"no-store"}).then(r=>r.json()).then(a=>{if(Array.isArray(a)&&a.length){UNI=a;UNIS=new Set(a.map(x=>x[0]));try{renderBanks0()}catch(e){}}}).catch(()=>{});
+fetch("data/screen.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(j&&j.top&&j.top.length)SCR=j}).catch(()=>{});
+function uniMatch(q){q=(q||"").trim().toUpperCase();if(!q||!UNI.length||/[\u0600-\u06FF]/.test(q))return[];const A=[],B=[];
+  for(const x of UNI){if(x[0].startsWith(q))A.push(x);else if(q.length>=3&&x[1].toUpperCase().includes(q))B.push(x);if(A.length>=25&&B.length>=15)break}
+  return A.slice(0,25).concat(B.slice(0,15))}
 async function pullFinnhub(){const key=$("key").value||FH_KEY,L=wlist();
   const R=await Promise.allSettled(L.map(async z=>{const j=await fhQuote(z,key);if(j.c==null||j.c===0)throw new Error("no data");return{z,p:j.c,chg:j.dp||0}}));
   const ok=R.filter(r=>r.status==="fulfilled").map(r=>r.value);
@@ -391,7 +402,8 @@ async function pullFinnhub(){const key=$("key").value||FH_KEY,L=wlist();
   window.bad=(bad.length?"ℹ️ لم تتوفر أسعار: "+bad.slice(0,8).join("، ")+(bad.length>8?"…":""):"")+(lim?" — تجاوزت حد الطلبات، ارفع فترة التحديث":"")+(Object.keys(VOLC).length?"":" — حجم التداول غير متوفر (تعذّر الاتصال بـ Yahoo)");
   return ok.map(x=>{const v=VOLC[x.z]?VOLC[x.z].v:0;return{sym:x.z,price:x.p,chg:x.chg,vol:v,liq:x.p*v}})}
 async function avq(q){const j=await(await fetch("https://www.alphavantage.co/query?"+q+"&apikey="+encodeURIComponent($("key").value))).json();if(j.Note||j.Information||j["Error Message"])throw new Error(j.Note||j.Information||j["Error Message"]);return j}
-function resolveSym(t){t=t.trim();const u=t.toUpperCase();if(data[u])return u;if(/[\u0600-\u06FF]/.test(t)){const b=BANKS.find(b=>b.name.includes(t));return b?b.ticker:""}return u.replace(/[^A-Z0-9.\-^=]/g,"").replace(".","-")}
+function resolveSym(t){t=t.trim();const u=t.toUpperCase();if(data[u])return u;if(/[\u0600-\u06FF]/.test(t)){const b=BANKS.find(b=>b.name.includes(t));return b?b.ticker:""}if(UNI.length&&!UNIS.has(u)&&!UNIS.has(u.replace(".","-"))&&u.length>=3){const n=UNI.find(x=>x[3]&&x[1].toUpperCase().startsWith(u))||UNI.find(x=>x[3]&&u.length>=4&&x[1].toUpperCase().includes(u));if(n)return n[0]}
+  return u.replace(/[^A-Z0-9.\-^=]/g,"").replace(".","-")}
 async function openSymbol(raw){const s=resolveSym(raw||"");if(!s){if(raw)$("msg").textContent="⚠️ لم أجد سهماً بهذا الاسم — اكتب الرمز بالإنجليزية";return}
   if(data[s]){$("q").value="";render();sel(s);return}
   const src=$("src").value;$("msg").textContent="⏳ جارٍ جلب "+s+"…";
@@ -408,7 +420,7 @@ async function openSymbol(raw){const s=resolveSym(raw||"");if(!s){if(raw)$("msg"
 let bkOn=true;
 const BAR={Buy:"شراء",Overweight:"زيادة الوزن","Overweight Top Pick":"زيادة الوزن (الأفضل)",Neutral:"حيادي"};
 function renderBanks0(){const tb=$("bkB");if(!tb)return;
-  $("sl").innerHTML=[...new Set([...Object.keys(data),...WL0,...BANKS.map(b=>b.ticker)])].map(z=>`<option value="${z}">`).join("")+[...new Set(BANKS.map(b=>b.name))].map(z=>`<option value="${z}">`).join("");
+  $("sl").innerHTML=[...new Set([...Object.keys(data),...WL0,...BANKS.map(b=>b.ticker)])].map(z=>`<option value="${z}">`).join("")+uniMatch($("q").value).map(x=>`<option value="${x[0]}" label="${x[1].replace(/"/g,"")} · ${x[2]}">`).join("")+[...new Set(BANKS.map(b=>b.name))].map(z=>`<option value="${z}">`).join("");
   if(!bkOn){tb.innerHTML='<tr style="cursor:default"><td colspan="10" class="hint" style="text-align:center;padding:18px">تم مسح الجدول. اضغط «جلب وتحديث» لإعادة تحميله.</td></tr>';return}
   const q=$("q").value.trim().toLowerCase(),F=BANKS.filter(b=>!q||(b.ticker+" "+b.name+" "+b.bank).toLowerCase().includes(q));
   const G={};F.forEach(b=>{(G[b.ticker]=G[b.ticker]||{name:b.name,t:b.ticker,L:[]}).L.push(b)});
@@ -633,9 +645,9 @@ function extra(){const d=DS[cur],sx=$("sx"),tp=$("tp");if(!sx)return;
 
 var LASTP;
 function xCount(s){const F=firms(s);if(!F.length)return"";const b=F.filter(z=>RC[z.r]==="buy").length,e=F.filter(z=>RC[z.r]==="sell").length;return`خبراء ${F.length}: ▲${b} ▬${F.length-b-e} ▼${e}`}
-async function scanPlan(){const B=$("scanB"),L=Object.values(data).sort((a,b)=>b.liq-a.liq).slice(0,12).map(x=>x.sym);loadReg();const R=[];
+async function scanPlan(){const B=$("scanB"),L0=Object.values(data).sort((a,b)=>b.liq-a.liq).slice(0,12).map(x=>x.sym),L=[...new Set([...L0,...(SCR?SCR.top.slice(0,20).map(x=>x.s):[])])];loadReg();const R=[];
  for(let i=0;i<L.length;i++){const s=L[i];B.innerHTML=`<p class="hint">⏳ ${i+1}/${L.length} · ${s}</p>`;try{await loadDeep(s)}catch(e){}
-  const d=DS[s];if(!d||d.c.length<110||!d.v)continue;const o=cur;cur=s;try{planUI(d);const P=LASTP,X=strongInd(d);R.push({s,P,X,c:P.sc*.6+(X?(X.score+100)/2:50)*.4})}catch(e){}cur=o}
+  const d=DS[s];if(!d||d.c.length<110||!d.v)continue;const o=cur;cur=s;try{planUI(d);const P=LASTP,X=strongInd(d);R.push({s,P,X,g:!L0.includes(s),c:P.sc*.6+(X?(X.score+100)/2:50)*.4})}catch(e){}cur=o}
  R.sort((a,b)=>b.c-a.c);$("regT").textContent="· حالة السوق (SPY): "+(REG?REG.r:"—");
- B.innerHTML=R.length?`<table><thead><tr><th>#</th><th>السهم</th><th>درجة الخطة</th><th>الحالة</th><th>المؤشرات القوية</th><th>R:R</th><th>الإبطال</th><th>الخبراء</th></tr></thead><tbody>${R.map((r,i)=>{const[l,c]=lab(r.X?r.X.score:0);return`<tr onclick="sel('${r.s}')"><td>${i+1}</td><td><b style="color:var(--lk)">${r.s}</b></td><td>${r.P.sc}/100</td><td><span class="bd ${r.P.k[1]}">${r.P.k[0]}</span></td><td><span class="bd ${c}">${l}</span></td><td>1:${r.P.rr.toFixed(1)}</td><td class="dn">$${r.P.stop.toFixed(2)}</td><td>${xCount(r.s)}</td></tr>`}).join("")}</tbody></table><p class="hint">الترتيب = 60% درجة الخطة + 40% قرار المؤشرات القوية. مراقبة وتحليل فقط.</p>`:'<p class="hint">لا بيانات كافية بعد. تأكد من اتصال المصدر ثم أعد المحاولة.</p>'}
+ B.innerHTML=R.length?`<table><thead><tr><th>#</th><th>السهم</th><th>درجة الخطة</th><th>الحالة</th><th>المؤشرات القوية</th><th>R:R</th><th>الإبطال</th><th>الخبراء</th></tr></thead><tbody>${R.map((r,i)=>{const[l,c]=lab(r.X?r.X.score:0);return`<tr onclick="${data[r.s]?`sel('${r.s}')`:`openSymbol('${r.s}')`}"><td>${i+1}</td><td><b style="color:var(--lk)">${r.s}</b>${r.g?' <span class="hint" title="من فحص كل السوق الأمريكي">🌐</span>':""}</td><td>${r.P.sc}/100</td><td><span class="bd ${r.P.k[1]}">${r.P.k[0]}</span></td><td><span class="bd ${c}">${l}</span></td><td>1:${r.P.rr.toFixed(1)}</td><td class="dn">$${r.P.stop.toFixed(2)}</td><td>${xCount(r.s)}</td></tr>`}).join("")}</tbody></table><p class="hint">الترتيب = 60% درجة الخطة + 40% قرار المؤشرات القوية. مراقبة وتحليل فقط.${SCR?` 🌐 = من فحص كل السوق الأمريكي: فُحص ${SCR.ok.toLocaleString("en")} سهماً بتاريخ ${new Date(SCR.date).toLocaleDateString("ar-SA")} واختير الأقوى.`:""}</p>`:'<p class="hint">لا بيانات كافية بعد. تأكد من اتصال المصدر ثم أعد المحاولة.</p>'}
 </script></body></html>
