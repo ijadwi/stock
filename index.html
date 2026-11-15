@@ -122,11 +122,15 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
  #favB td[colspan]{display:block}#favB td[colspan]::before{content:none}
  #fav input{max-width:150px}
 }
+
+.ch .lnR{stroke:var(--dn)}.ch .lnS{stroke:var(--up)}.ch .lnP{stroke:var(--ac)}.ch text.txR{fill:var(--dn)}.ch text.txS{fill:var(--up)}.ch text.txP{fill:var(--ac)}.ch .zR{fill:var(--dn);fill-opacity:.10}.ch .zS{fill:var(--up);fill-opacity:.10}.ch .wk{stroke:var(--mu);stroke-opacity:.5}
+#srTb td,#srTb th{white-space:nowrap}#srTb tr{cursor:default}
+@media print{body.pf .side,body.pf .top,body.pf .crumb,body.pf main>section:not(#fav){display:none!important}body.pf .page{margin:0}body.pf main{padding:0}body.pf #fav{border:0}}
 </style></head><body>
 <aside class="side"><a class="on">☰</a><a onclick="document.getElementById('fav').scrollIntoView()">⭐</a><a onclick="document.getElementById('banks').scrollIntoView()">🏛</a><a onclick="scrollTo(0,0)">💧</a><a>🔔</a><a>📰</a><a onclick="document.getElementById('wn').scrollIntoView()">🔄</a><a onclick="document.getElementById('cfg').scrollIntoView()">⚙️</a></aside>
 <div class="page">
 <div class="top"><div class="logo">💧 سيولة<b>الأسهم</b> · توصيات البنوك <span class="bd hold" style="font-size:10px">Observation Only</span></div><input id="q" list="sl" autocomplete="off" placeholder="اكتب رمز أي سهم (مثل NVDA) ثم Enter…"><datalist id="sl"></datalist>
- <div style="display:flex;gap:12px;align-items:center"><div class="live" id="live"><span class="dot"></span><span id="lt">غير متصل</span></div><button onclick="window.print()">🖨️ طباعة / PDF</button></div></div>
+ <div style="display:flex;gap:12px;align-items:center"><div class="live" id="live"><span class="dot"></span><span id="lt">غير متصل</span></div><button onclick="printAll()">🖨️ طباعة / PDF</button></div></div>
 <div class="crumb"><div>سهم › <b id="cS">—</b> › <b>نظرة عامة ▾</b> › <span id="cP"></span></div><div class="ti" id="ti"></div><div>نظرة عامة بتاريخ: <b id="cD"></b></div></div>
 <main>
 <section class="g1">
@@ -135,6 +139,10 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
  <div style="display:grid;gap:16px;align-content:start"><div class="cd"><h2>إحصاءات السهم</h2><div class="st" id="stats"></div><div class="bb" id="bb"></div></div>
   <div class="cd"><h2>📰 آخر الأخبار</h2><div class="nw" id="nw"></div></div></div>
 </section>
+<section class="cd" id="sr"><div class="mh"><h2 id="srT">📈 شارت السهم المختار · 3 دعوم و3 مقاومات</h2><div class="noprint" style="display:flex;gap:8px"><select id="srR" onchange="drawSR()"><option value="60">60 يوماً</option><option value="90">90 يوماً</option><option value="180" selected>180 يوماً</option><option value="250">سنة</option></select></div></div>
+ <div class="lg"><span><i style="background:#6aa9ff"></i>سعر الإغلاق</span><span><i style="background:var(--dn)"></i>مقاومة 1 · 2 · 3</span><span><i style="background:var(--up)"></i>دعم 1 · 2 · 3</span><span><i style="background:var(--ac)"></i>السعر الحالي</span></div>
+ <div id="srC" class="chw"><p class="hint">يظهر بعد اختيار سهم وتحميل بياناته اليومية…</p></div><div id="srTb" class="tw"></div>
+ <p class="hint">تُحسب المستويات من القمم والقيعان المحورية في الفترة المختارة، وتُدمج المتقاربة منها في مستوى واحد. «اللمسات» = عدد مرات ارتداد السعر من المستوى. المستوى «تقديري» يعني أنه لا توجد قمة أو قاع تاريخي كافٍ في هذه الفترة فيُقدَّر بمضاعفات ATR. مراقبة وتحليل فقط، وليست نصيحة استثمارية.</p></section>
 <section class="cd" id="scan"><div class="mh"><h2>🏆 أفضل الفرص · ماسح الخطة والمؤشرات القوية <small class="hint" id="regT"></small></h2><button class="bt noprint" onclick="scanPlan()">🔍 تحليل أعلى الأسهم سيولة</button></div><div id="scanB" class="tw"><p class="hint">اضغط «تحليل» ليُحمَّل التحليل المعمّق لأعلى 12 سهماً وتُرتَّب فرصها. مراقبة وتحليل فقط (Observation Only).</p></div></section>
 <section class="g2"><div class="cd"><h2>💪 المؤشرات القوية والمفاضلة بينها</h2><div id="sx"></div></div><div class="cd"><h2>🎯 خطة الصفقة والمخاطر</h2><div id="tp"></div></div></section>
 <section class="g2 t"><div class="cd"><h2>أعلى الأسهم سيولة</h2><div class="tw"><table><thead><tr><th>السهم</th><th>السعر</th><th>التغير</th><th>الحجم</th><th>قيمة التداول</th><th>حصة السيولة</th><th>التوصية</th></tr></thead><tbody id="t1"></tbody></table></div></div>
@@ -142,7 +150,7 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
 <section class="g3"><div class="cd"><h2>مؤشر القوة النسبية RSI (14)</h2><div id="rsiC"></div></div><div class="cd"><h2>MACD (الهيستوغرام) مع السعر</h2><div id="macdC"></div></div>
  <div class="cd" id="anC"><h2>المحللون وبيوت المال</h2><div id="an"></div></div></section>
 <section class="cd" id="fav"><div class="mh"><h2>⭐ المفضلة · محفظتي <small class="hint">· كل سهم يُضاف يُعتبر مشترى بسعره وقت الإضافة · عدّل السعر والتاريخ والكمية · «➕ شراء» و«➖ بيع» للتداول الوهمي الكامل أو الجزئي</small></h2>
- <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" onclick="favAdd()">➕ إضافة سهم</button><button class="bt" onclick="renderFav(true)">🔄 تحديث الملخص</button><button class="bt" onclick="favExport()">📤 تصدير</button><button class="bt" onclick="favImport()">📥 استيراد</button><button class="bt" onclick="window.print()">🖨️ طباعة</button></div></div>
+ <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" onclick="favAdd()">➕ إضافة سهم</button><button class="bt" onclick="renderFav(true)">🔄 تحديث الملخص</button><button class="bt" onclick="favFile()">💾 حفظ البيانات (ملف)</button><button class="bt" onclick="favLoad()">📂 فتح ملف محفوظ</button><button class="bt" onclick="favExport()">📤 نسخ النص</button><button class="bt" onclick="favImport()">📥 استيراد</button><button class="bt" onclick="favPrint()">🖨️ طباعة المفضلة</button><button class="bt" onclick="favPDF()">📄 حفظ المفضلة PDF</button></div></div>
  <div id="favB"><p class="hint">لا توجد أسهم في المفضلة بعد. افتح أي سهم واضغط «☆ أضف للمفضلة».</p></div>
  <p class="hint" style="margin-top:8px">البيانات محفوظة في متصفح هذا الجهاز فقط (استخدم التصدير والاستيراد للنقل بين الجوال والحاسوب). حسابات افتراضية للمتابعة وليست كشف حساب فعلياً، ولا تشمل العمولات أو الضرائب، وليست نصيحة استثمارية.</p></section>
 <section class="cd" id="wn"><div class="mh"><h2>🔄 انعكاس الاتجاه من هابط إلى صاعد <small class="hint">· منهج ستان واينستين (متوسط 30 أسبوعاً ≈ 150 يوم تداول)</small></h2><div class="noprint"><button class="bt" onclick="scanWein()">🔍 ماسح الانعكاس للقائمة</button></div></div>
@@ -151,7 +159,7 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
 <section class="g2"><div class="cd"><h2>🔬 المؤشرات الفنية</h2><div id="te"></div></div><div class="cd"><h2>🎯 أسباب التوصية</h2><div id="rc"></div><ul id="rs"></ul><p class="hint">التوصية = 30% مؤشرات فنية + 25% مؤشرات قوية مرجّحة + 35% إجماع الخبراء + 10% مشاعر الأخبار. للأغراض المعلوماتية فقط وليست نصيحة استثمارية.</p></div></section>
 <section class="cd"><h2 id="vpT">حجم التداول لكل نطاق سعري</h2><div class="tw"><table><thead><tr><th>نطاق السعر</th><th>الحجم</th><th>حصة الحجم</th><th>ضغط الشراء (حجم أيام الصعود)</th></tr></thead><tbody id="vp"></tbody></table></div></section>
 <section class="cd" id="banks"><div class="mh"><h2>🏛 توصيات البنوك الأمريكية للأسهم <small class="hint">· محدثة حتى 22 أكتوبر 2026 · السعر الحالي مباشر · اضغط أي صف لتحليل السهم</small></h2>
- <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" onclick="showBanks()">📥 جلب وتحديث</button><button class="bt" onclick="clearBanks()">🗑️ مسح الجدول</button><button class="bt" onclick="window.print()">🖨️ طباعة</button><button class="bt" onclick="pdfBanks()">📄 حفظ PDF</button></div></div>
+ <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" onclick="showBanks()">📥 جلب وتحديث</button><button class="bt" onclick="clearBanks()">🗑️ مسح الجدول</button><button class="bt" onclick="printAll()">🖨️ طباعة</button><button class="bt" onclick="pdfBanks()">📄 حفظ PDF</button></div></div>
  <div class="hint" id="bkCnt" style="margin-bottom:8px"></div><div class="tw"><table><thead><tr><th>السهم</th><th>الرمز</th><th>عدد الخبراء</th><th>شراء</th><th>محايد</th><th>السعر الحالي</th><th>متوسط المستهدف</th><th>الصعود للهدف</th><th>آخر تحديث</th></tr></thead><tbody id="bkB"></tbody></table></div>
  <ul class="hint" style="margin-top:10px"><li><b>Buy (شراء):</b> توقع أرباح رأسمالية جيدة. <b>Overweight (زيادة الوزن):</b> أداء متوقع أفضل من السوق أو القطاع. <b>Neutral (حيادي):</b> احتفاظ، أداء مساوٍ للسوق.</li><li>«الصعود للهدف» = المستهدف الجديد مقارنة بالسعر الحالي المباشر.</li><li>معلومات عامة وليست نصيحة استثمارية شخصية، سوق أمريكي فقط.</li></ul></section>
 <section class="cd noprint cfgb" id="cfg"><h2>🔌 ربط البيانات</h2><div class="cfgg">
@@ -595,7 +603,7 @@ $("go").click();
 var REG;
 function renderBanks(){renderBanks0.apply(this,arguments);bkCount()}
 function bkCount(){try{const b=BANKS.filter(x=>BR[x.rec]==="buy"||BR[x.rec]==="sb").length,h=BANKS.length-b;$("bkCnt").innerHTML=`إجمالي توصيات الخبراء: <b>${BANKS.length}</b> · شراء/زيادة وزن <b class="up">${b}</b> · حياد <b>${h}</b>`}catch(e){}}
-function drawD(){drawD0();try{extra()}catch(e){console.error(e)}}
+function drawD(){drawD0();try{extra()}catch(e){console.error(e)}try{drawSR()}catch(e){console.error(e)}}
 function strongInd(d){const c=d.c,h=d.hi||c,l=d.lo||c,v=d.v||c.map(()=>1),n=c.length;if(n<110||h.length!=n||l.length!=n)return null;
  const tr=c.map((x,i)=>i?Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])):h[i]-l[i]);
  const wil=(a,p)=>{const o=[];let s=0;a.forEach((x,i)=>{if(i<p){s+=x;o.push(i==p-1?s:0)}else o.push(o[i-1]-o[i-1]/p+x)});return o};
@@ -644,6 +652,85 @@ function extra(){const d=DS[cur],sx=$("sx"),tp=$("tp");if(!sx)return;
  tp.innerHTML=planUI(d)}
 
 var LASTP;
+
+// ---------- شارت السهم المختار: 3 دعوم + 3 مقاومات ----------
+function srCalc(d,N){
+  const n0=d.c.length,o=n0-Math.min(N,n0),c=d.c.slice(o),h=(d.hi||d.c).slice(o),l=(d.lo||d.c).slice(o),n=c.length;
+  const p=(data[cur]&&data[cur].price)||c[n-1];
+  let a=0,k=0;for(let i=Math.max(1,n-14);i<n;i++){a+=Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1]));k++}
+  const atr=k?a/k:p*.02,tol=Math.max(atr*.7,p*.006),K=4,piv=[];
+  for(let i=K;i<n-K;i++){let H=true,Lw=true;for(let j=i-K;j<=i+K;j++){if(h[j]>h[i])H=false;if(l[j]<l[i])Lw=false}
+    if(H)piv.push({p:h[i],i});if(Lw)piv.push({p:l[i],i})}
+  const mx=Math.max(...h),mn=Math.min(...l),ix=h.indexOf(mx),iy=l.indexOf(mn);
+  if(!piv.some(q=>q.i===ix&&q.p===mx))piv.push({p:mx,i:ix});
+  if(!piv.some(q=>q.i===iy&&q.p===mn))piv.push({p:mn,i:iy});
+  piv.sort((x,y)=>x.p-y.p);const G=[];
+  piv.forEach(q=>{const g=G[G.length-1];if(g&&q.p-g.m<=tol){g.n++;g.s+=q.p;g.m=g.s/g.n}else G.push({s:q.p,n:1,m:q.p})});
+  const pick=(arr)=>{const t1=arr.filter(g=>g.n>=2),t2=arr.filter(g=>g.n<2);let s=t1.slice(0,3);if(s.length<3)s=s.concat(t2.slice(0,3-s.length));return s};
+  const up=G.filter(g=>g.m>p+tol*.25).sort((x,y)=>x.m-y.m),dn=G.filter(g=>g.m<p-tol*.25).sort((x,y)=>y.m-x.m);
+  const R=pick(up).sort((x,y)=>x.m-y.m).map(g=>({p:g.m,n:g.n,est:false})),S=pick(dn).sort((x,y)=>y.m-x.m).map(g=>({p:g.m,n:g.n,est:false}));
+  while(R.length<3){const b=R.length?R[R.length-1].p:p;R.push({p:b+1.5*atr,n:0,est:true})}
+  while(S.length<3){const b=S.length?S[S.length-1].p:p;S.push({p:Math.max(.01,b-1.5*atr),n:0,est:true})}
+  return{p,atr,R,S}}
+function srChart(d,N,Lv){
+  const n0=d.c.length,o=n0-Math.min(N,n0),c=d.c.slice(o),h=(d.hi||d.c).slice(o),l=(d.lo||d.c).slice(o),dt=d.d.slice(o),n=c.length,p=Lv.p;
+  const W=900,H=400,Lm=52,Rm=138,T=14,B=26,pw=W-Lm-Rm,ph=H-T-B;
+  const all=[...h,...l,...Lv.R.map(x=>x.p),...Lv.S.map(x=>x.p)];let mn=Math.min(...all),mx=Math.max(...all);const pd=(mx-mn||1)*.05;mn-=pd;mx+=pd;
+  const X=i=>Lm+pw*(i+.5)/n,Y=v=>T+ph*(1-(v-mn)/(mx-mn)),z=Lv.atr*.25;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="ch" style="min-width:640px">`;
+  for(let k=0;k<=4;k++){const y=T+ph*k/4;s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${y}" y2="${y}" stroke="#ffffff14"/><text x="${Lm-6}" y="${y+4}" text-anchor="end" fill="#9aa1bd" font-size="11">${(mx-(mx-mn)*k/4).toFixed(2)}</text>`}
+  const LV=[...Lv.R.map((x,i)=>({...x,k:"R",nm:"مقاومة "+(i+1)})),...Lv.S.map((x,i)=>({...x,k:"S",nm:"دعم "+(i+1)}))];
+  LV.forEach(x=>{s+=`<rect class="z${x.k}" x="${Lm}" y="${Y(x.p+z)}" width="${pw}" height="${Math.max(1,Y(x.p-z)-Y(x.p+z))}"/>`});
+  for(let i=0;i<n;i++)s+=`<line class="wk" x1="${X(i)}" x2="${X(i)}" y1="${Y(h[i])}" y2="${Y(l[i])}" stroke-width="1"/>`;
+  s+=`<polyline fill="none" stroke="#6aa9ff" stroke-width="1.8" points="${c.map((q,i)=>X(i).toFixed(1)+","+Y(q).toFixed(1)).join(" ")}"/>`;
+  LV.forEach(x=>{s+=`<line class="ln${x.k}" x1="${Lm}" x2="${W-Rm}" y1="${Y(x.p)}" y2="${Y(x.p)}" stroke-width="1.5" stroke-dasharray="${x.est?"2 4":"7 4"}"/>`});
+  s+=`<line class="lnP" x1="${Lm}" x2="${W-Rm}" y1="${Y(p)}" y2="${Y(p)}" stroke-width="1.2" stroke-dasharray="1 3"/>`;
+  const lb=[...LV.map(x=>({y:Y(x.p),c:"tx"+x.k,t:x.nm+(x.est?" ≈ ":" · ")+x.p.toFixed(2)})),{y:Y(p),c:"txP",t:"السعر · "+p.toFixed(2)}].sort((a,b)=>a.y-b.y);
+  for(let i=1;i<lb.length;i++)if(lb[i].y-lb[i-1].y<14)lb[i].y=lb[i-1].y+14;
+  for(let i=lb.length-2;i>=0;i--)if(lb[i].y>H-B)lb[i].y=H-B;
+  lb.forEach(q=>{s+=`<text class="${q.c}" x="${W-Rm+8}" y="${q.y+4}" font-size="12" font-weight="700">${q.t}</text>`});
+  for(let k=0;k<6;k++){const i=Math.round((n-1)*k/5);s+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" fill="#9aa1bd" font-size="11">${dt[i]}</text>`}
+  return s+"</svg>"}
+function srTable(Lv){
+  const p=Lv.p,row=(nm,x,k)=>{const dd=(x.p/p-1)*100;return`<tr><td class="${k==="R"?"dn":"up"}"><b>${nm}</b></td><td style="direction:ltr;text-align:start">${money(x.p)}</td><td style="direction:ltr;text-align:start">${sg(dd,2)}</td><td>${x.est?"—":x.n}</td><td>${x.est?"تقديري":x.n>=3?"قوي":x.n===2?"متوسط":"ضعيف"}</td></tr>`};
+  return`<table><thead><tr><th>المستوى</th><th>السعر</th><th>المسافة عن السعر الحالي</th><th>اللمسات</th><th>القوة</th></tr></thead><tbody>`+
+   [2,1,0].map(i=>row("مقاومة "+(i+1),Lv.R[i],"R")).join("")+
+   `<tr><td><b>السعر الحالي</b></td><td style="direction:ltr;text-align:start"><b>${money(p)}</b></td><td>—</td><td>—</td><td>—</td></tr>`+
+   [0,1,2].map(i=>row("دعم "+(i+1),Lv.S[i],"S")).join("")+`</tbody></table>`}
+function drawSR(){const box=$("srC"),tb=$("srTb");if(!box)return;
+  const t=$("srT");if(t)t.textContent="📈 شارت "+(cur||"السهم المختار")+" · 3 دعوم و3 مقاومات";
+  const d=cur&&DS[cur];
+  if(!d||!d.c||d.c.length<30||!d.d){box.innerHTML='<p class="hint">'+(cur&&DERR[cur]?"⚠️ "+DERR[cur]:"يظهر بعد تحميل البيانات اليومية للسهم (30 يوماً على الأقل)…")+'</p>';tb.innerHTML="";return}
+  const N=+$("srR").value,Lv=srCalc(d,N);box.innerHTML=srChart(d,N,Lv);tb.innerHTML=srTable(Lv)}
+
+
+// ---------- حفظ بيانات المفضلة في ملف واسترجاعها ----------
+function favFile(){
+  if(!Object.keys(FAV.open).length&&!FAV.closed.length){$("msg").textContent="⚠️ لا توجد بيانات في المفضلة لحفظها";return}
+  const b=new Blob([JSON.stringify({app:"stock-fav",v:1,saved:new Date().toISOString(),open:FAV.open,closed:FAV.closed},null,1)],{type:"application/json"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download="favorites_"+today()+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  $("msg").textContent="✅ تم حفظ ملف المفضلة (favorites_"+today()+".json)"}
+function favLoad(){const i=document.createElement("input");i.type="file";i.accept=".json,application/json";
+  i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||(!o.open&&!o.closed))throw 0;
+      Object.assign(FAV.open,o.open||{});const seen=new Set(),k=q=>q.sym+"|"+q.t+"|"+q.xt;
+      FAV.closed=FAV.closed.concat(o.closed||[]).filter(q=>{const x=k(q);if(seen.has(x))return false;seen.add(x);return true}).slice(0,60);
+      favSave();renderFav(true);$("msg").textContent="✅ تم استرجاع المفضلة من الملف"}catch(e){$("msg").textContent="⚠️ ملف غير صالح"}};
+    r.readAsText(f)};i.click()}
+
+// ---------- المفضلة: طباعة وحفظ PDF مستقلان عن بقية الصفحة ----------
+function printAll(){document.body.classList.remove("pf");window.print()}
+function favPrint(){
+  if(!Object.keys(FAV.open).length&&!FAV.closed.length){$("msg").textContent="⚠️ لا توجد أسهم في المفضلة لطباعتها";return}
+  const b=document.body,t=document.title;b.classList.add("pf");document.title="المفضلة_"+today();
+  const done=()=>{b.classList.remove("pf");document.title=t;window.removeEventListener("afterprint",done)};
+  window.addEventListener("afterprint",done);setTimeout(()=>window.print(),60)}
+function favPDF(){
+  if(!Object.keys(FAV.open).length&&!FAV.closed.length){$("msg").textContent="⚠️ لا توجد أسهم في المفضلة لحفظها";return}
+  if(typeof html2pdf==="undefined")return favPrint();
+  const el=$("fav"),nb=[...el.querySelectorAll(".noprint")];document.body.classList.add("pm");nb.forEach(q=>q.style.display="none");
+  html2pdf().set({margin:.3,filename:"Favorites_"+today()+".pdf",image:{type:"jpeg",quality:.98},html2canvas:{scale:2,windowWidth:1200},jsPDF:{unit:"in",format:"a4",orientation:"landscape"},pagebreak:{mode:["css","legacy"],avoid:"tr"}})
+   .from(el).save().finally(()=>{document.body.classList.remove("pm");nb.forEach(q=>q.style.display="")})}
 function xCount(s){const F=firms(s);if(!F.length)return"";const b=F.filter(z=>RC[z.r]==="buy").length,e=F.filter(z=>RC[z.r]==="sell").length;return`خبراء ${F.length}: ▲${b} ▬${F.length-b-e} ▼${e}`}
 async function scanPlan(){const B=$("scanB"),L0=Object.values(data).sort((a,b)=>b.liq-a.liq).slice(0,12).map(x=>x.sym),L=[...new Set([...L0,...(SCR?SCR.top.slice(0,20).map(x=>x.s):[])])];loadReg();const R=[];
  for(let i=0;i<L.length;i++){const s=L[i];B.innerHTML=`<p class="hint">⏳ ${i+1}/${L.length} · ${s}</p>`;try{await loadDeep(s)}catch(e){}
