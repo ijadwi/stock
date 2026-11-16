@@ -125,6 +125,15 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
 
 .ch .lnR{stroke:var(--dn)}.ch .lnS{stroke:var(--up)}.ch .lnP{stroke:var(--ac)}.ch text.txR{fill:var(--dn)}.ch text.txS{fill:var(--up)}.ch text.txP{fill:var(--ac)}.ch .zR{fill:var(--dn);fill-opacity:.10}.ch .zS{fill:var(--up);fill-opacity:.10}.ch .wk{stroke:var(--mu);stroke-opacity:.5}
 #srTb td,#srTb th{white-space:nowrap}#srTb tr{cursor:default}
+
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.vs>div{background:var(--row);border-radius:12px;padding:10px 12px}.vb{font-size:1.15em;font-weight:700}
+.vgold{border:2px solid #e0a400;border-radius:14px;padding:10px 14px;margin:0 0 12px;background:#f5d76e1f;line-height:1.7}
+.vg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.vr{background:var(--row);border-radius:12px;padding:10px 12px;border-inline-start:5px solid var(--bd);break-inside:avoid}
+.vr.g{border-color:var(--up)}.vr.y{border-color:#e0a400}.vr.r{border-color:var(--dn)}.vr.n{opacity:.85}
+.vh{display:flex;align-items:center;gap:8px;margin-bottom:4px}.vh b{flex:1}.vn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#f5d76e55;font-weight:700;font-size:.9em}
+.vv{font-weight:600;margin-bottom:3px;line-height:1.6}.vw{color:var(--mu);font-size:.88em;line-height:1.6}
+#valK{display:flex;gap:8px;flex-wrap:wrap;align-items:center}#valK input{flex:1;min-width:200px}
+@media(max-width:900px){.vg,.vs{grid-template-columns:1fr}}
 </style></head><body>
 <aside class="side"><a class="on">☰</a><a onclick="document.getElementById('fav').scrollIntoView()">⭐</a><a onclick="document.getElementById('banks').scrollIntoView()">🏛</a><a onclick="scrollTo(0,0)">💧</a><a>🔔</a><a>📰</a><a onclick="document.getElementById('wn').scrollIntoView()">🔄</a><a onclick="document.getElementById('cfg').scrollIntoView()">⚙️</a></aside>
 <div class="page">
@@ -142,6 +151,8 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
  <div class="lg"><span><i style="background:#6aa9ff"></i>سعر الإغلاق</span><span><i style="background:var(--dn)"></i>مقاومة 1 · 2 · 3</span><span><i style="background:var(--up)"></i>دعم 1 · 2 · 3</span><span><i style="background:var(--ac)"></i>السعر الحالي</span></div>
  <div id="srC" class="chw"><p class="hint">يظهر بعد اختيار سهم وتحميل بياناته اليومية…</p></div><div id="srTb" class="tw"></div>
  <p class="hint">تُحسب المستويات من القمم والقيعان المحورية في الفترة المختارة، وتُدمج المتقاربة منها في مستوى واحد. «اللمسات» = عدد مرات ارتداد السعر من المستوى. المستوى «تقديري» يعني أنه لا توجد قمة أو قاع تاريخي كافٍ في هذه الفترة فيُقدَّر بمضاعفات ATR. مراقبة وتحليل فقط، وليست نصيحة استثمارية.</p></section>
+<section class="cd" id="val"><div class="mh"><h2 id="valT">📋 تقييم السهم بالقواعد العشر</h2><div class="noprint"><button class="bt" onclick="loadFund(cur,true)">🔄 تحديث البيانات الأساسية</button></div></div>
+ <div id="valB"><p class="hint">اختر سهماً لتقييمه.</p></div></section>
 <section class="cd" id="scan"><div class="mh"><h2>🏆 أفضل الفرص · ماسح الخطة والمؤشرات القوية <small class="hint" id="regT"></small></h2><button class="bt noprint" onclick="scanPlan()">🔍 تحليل أعلى الأسهم سيولة</button></div><div id="scanB" class="tw"><p class="hint">اضغط «تحليل» ليُحمَّل التحليل المعمّق لأعلى 12 سهماً وتُرتَّب فرصها. مراقبة وتحليل فقط (Observation Only).</p></div></section>
 <section class="g2"><div class="cd"><h2>💪 المؤشرات القوية والمفاضلة بينها</h2><div id="sx"></div></div><div class="cd"><h2>🎯 خطة الصفقة والمخاطر</h2><div id="tp"></div></div></section>
 <section class="g2 t"><div class="cd"><h2>أعلى الأسهم سيولة</h2><div class="tw"><table><thead><tr><th>السهم</th><th>السعر</th><th>التغير</th><th>الحجم</th><th>قيمة التداول</th><th>حصة السيولة</th><th>التوصية</th></tr></thead><tbody id="t1"></tbody></table></div></div>
@@ -602,7 +613,7 @@ $("go").click();
 var REG;
 function renderBanks(){renderBanks0.apply(this,arguments);bkCount()}
 function bkCount(){try{const b=BANKS.filter(x=>BR[x.rec]==="buy"||BR[x.rec]==="sb").length,h=BANKS.length-b;$("bkCnt").innerHTML=`إجمالي توصيات الخبراء: <b>${BANKS.length}</b> · شراء/زيادة وزن <b class="up">${b}</b> · حياد <b>${h}</b>`}catch(e){}}
-function drawD(){drawD0();try{extra()}catch(e){console.error(e)}try{drawSR()}catch(e){console.error(e)}try{favAsof()}catch(e){console.error(e)}}
+function drawD(){drawD0();try{extra()}catch(e){console.error(e)}try{drawSR()}catch(e){console.error(e)}try{favAsof()}catch(e){console.error(e)}try{drawVal()}catch(e){console.error(e)}}
 function strongInd(d){const c=d.c,h=d.hi||c,l=d.lo||c,v=d.v||c.map(()=>1),n=c.length;if(n<110||h.length!=n||l.length!=n)return null;
  const tr=c.map((x,i)=>i?Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])):h[i]-l[i]);
  const wil=(a,p)=>{const o=[];let s=0;a.forEach((x,i)=>{if(i<p){s+=x;o.push(i==p-1?s:0)}else o.push(o[i-1]-o[i-1]/p+x)});return o};
@@ -718,6 +729,106 @@ function favLoad(){const i=document.createElement("input");i.type="file";i.accep
     r.readAsText(f)};i.click()}
 
 // ---------- المفضلة: طباعة وحفظ PDF مستقلان عن بقية الصفحة ----------
+
+// ---------- تقييم السهم بالقواعد العشر (من الإنفوجرافيك) ----------
+var FUND={};
+function _n(v){return typeof v==="number"&&isFinite(v)?v:null}
+function gk(m,...ks){for(const k of ks){const v=_n(m&&m[k]);if(v!=null)return v}return null}
+function fx(v,d=1){return v==null?"—":v.toFixed(d)}
+function escH(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function capTxt(m){return m==null?"":m>=1e6?(m/1e6).toFixed(2)+" تريليون $":m>=1e3?(m/1e3).toFixed(1)+" مليار $":m.toFixed(0)+" مليون $"}
+function _med(a){const s=[...a].sort((x,y)=>x-y),k=s.length>>1;return s.length%2?s[k]:(s[k-1]+s[k])/2}
+function fhKey(){return(($("key")&&$("key").value)||FH_KEY||"").trim()}
+async function fhJ(kind,sym){
+  let u;
+  if(HAS_PX)u=PROXY+"/"+kind+"?symbol="+encodeURIComponent(sym);
+  else{const k=fhKey();if(!k)throw new Error("nokey");
+    u="https://finnhub.io/api/v1/"+(kind==="metric"?"stock/metric":kind==="profile"?"stock/profile2":"stock/peers")+"?symbol="+encodeURIComponent(sym)+(kind==="metric"?"&metric=all":"")+"&token="+encodeURIComponent(k)}
+  const r=await fetch(u);if(r.status===429)throw new Error("تجاوزت حد طلبات Finnhub (60 في الدقيقة) — انتظر دقيقة ثم أعد المحاولة");
+  if(r.status===401||r.status===403)throw new Error("مفتاح Finnhub غير صالح أو لا يملك صلاحية هذا الطلب");
+  if(!r.ok)throw new Error("تعذّر جلب البيانات الأساسية (HTTP "+r.status+")"+(HAS_PX?" — تأكد أن الوسيط محدَّث بمسارات /metric و/profile و/peers":""));
+  return r.json()}
+async function loadFund(s,force){
+  if(!s)return;const c=FUND[s];
+  if(c&&!force&&(c.st==="load"||(c.st==="ok"&&Date.now()-c.t<216e5)||(c.st==="err"&&Date.now()-c.t<6e4)))return;
+  FUND[s]={st:"load",t:Date.now()};if(cur===s)drawVal();
+  try{
+    const[m,p,pe]=await Promise.all([fhJ("metric",s),fhJ("profile",s).catch(e=>{if(e.message==="nokey")throw e;return{}}),fhJ("peers",s).catch(e=>{if(e.message==="nokey")throw e;return[]})]);
+    const mm=m&&m.metric;if(!mm||!Object.keys(mm).length)throw new Error("لا توجد بيانات أساسية لهذا الرمز (قد يكون صندوقاً أو سهماً غير أمريكي)");
+    const peers=(Array.isArray(pe)?pe:[]).filter(x=>x&&x!==s).slice(0,5);
+    const pr=await Promise.allSettled(peers.map(x=>fhJ("metric",x)));
+    const pp=pr.map((r,i)=>r.status==="fulfilled"?{s:peers[i],pe:gk(r.value&&r.value.metric,"peTTM","peBasicExclExtraTTM","peExclExtraTTM")}:null).filter(x=>x&&x.pe>0);
+    FUND[s]={st:"ok",t:Date.now(),m:mm,p:p||{},peers:pp}
+  }catch(e){FUND[s]={st:"err",t:Date.now(),msg:e.message}}
+  if(cur===s)drawVal()}
+function valEval(s,F){
+  const m=F.m,P=F.p||{},x=data[s],p=x?x.price:null,pos=v=>v!=null&&v>0;
+  const pe=gk(m,"peTTM","peBasicExclExtraTTM","peExclExtraTTM"),pb=gk(m,"pbQuarterly","pbAnnual"),ps=gk(m,"psTTM","psAnnual"),pf=gk(m,"pfcfShareTTM","pfcfShareAnnual");
+  const eps=gk(m,"epsTTM","epsInclExtraItemsTTM","epsExclExtraItemsTTM","epsAnnual"),bv=gk(m,"bookValuePerShareQuarterly","bookValuePerShareAnnual");
+  const g3=gk(m,"epsGrowth3Y"),g5=gk(m,"epsGrowth5Y"),gy=gk(m,"epsGrowthTTMYoy"),r3=gk(m,"revenueGrowth3Y"),r5=gk(m,"revenueGrowth5Y");
+  const om=gk(m,"operatingMarginTTM","operatingMarginAnnual"),gmg=gk(m,"grossMarginTTM"),roi=gk(m,"roiTTM","roiAnnual"),roe=gk(m,"roeTTM","roeRfy");
+  const de=gk(m,"totalDebt/totalEquityQuarterly","totalDebt/totalEquityAnnual"),cr=gk(m,"currentRatioQuarterly","currentRatioAnnual"),ic=gk(m,"netInterestCoverageTTM"),beta=gk(m,"beta");
+  const growth=g3!=null?g3:g5,R=[];
+  // 1) طبيعة الشركة
+  {const nm=escH(P.name||s)+" — "+escH(P.finnhubIndustry||"قطاع غير معروف")+(P.country?" · "+escH(P.country):"")+(P.marketCapitalization?" · قيمة سوقية "+capTxt(P.marketCapitalization):"");
+   R.push({n:1,g:"q",t:"افهم طبيعة الشركة",v:om==null?"n":om>=15?"g":om>=5?"y":"r",val:nm+(om!=null?" · هامش تشغيلي "+fx(om)+"%":"")+(gmg!=null?" · هامش إجمالي "+fx(gmg)+"%":""),why:"الأرقام لا تغني عن فهم كيف تربح الشركة وما ميزتها التنافسية. الهامش التشغيلي مؤشر تقريبي فقط على جودة النشاط."})}
+  // 2) نمو الأرباح
+  {const a=g3!=null?g3:gy;
+   R.push({n:2,g:"q",t:"افحص نمو الأرباح",v:a==null?"n":(a>=10&&(gy==null||gy>0))?"g":a>0?"y":"r",val:"نمو ربحية السهم: 3 سنوات "+fx(g3)+"% · 5 سنوات "+fx(g5)+"% · آخر 12 شهراً "+fx(gy)+"%",why:"النمو المستمر في الأرباح قد يدعم تقييماً أعلى مع الوقت؛ نمو سالب أو متذبذب يستدعي الحذر."})}
+  // 3) لا تكتفِ بمكرر الربحية
+  {const sg=[];if(pe!=null)sg.push(["P/E",pe,pe>0&&pe<=20]);if(pb!=null)sg.push(["P/B",pb,pb>0&&pb<=3]);if(ps!=null)sg.push(["P/S",ps,ps>0&&ps<=4]);if(pf!=null)sg.push(["P/FCF",pf,pf>0&&pf<=20]);
+   const ch=sg.filter(q=>q[2]).length;
+   R.push({n:3,g:"p",t:"لا تنظر إلى مكرر الربحية فقط",v:!sg.length?"n":sg.length<2?"y":ch/sg.length>=.5?"g":ch===0?"r":"y",val:sg.map(q=>q[0]+" "+fx(q[1])+(q[2]?" ✓":"")).join(" · ")||"لا توجد مقاييس تقييم",why:"انخفاض المكرر لا يعني دائماً أن السهم مقوَّم بأقل من قيمته. الحكم هنا من عدة مقاييس معاً (✓ = ضمن النطاق المعتاد: P/E≤20، P/B≤3، P/S≤4، P/FCF≤20)."})}
+  // 4) مقارنة بالشركات المماثلة
+  {const pp=F.peers||[];
+   if(pos(pe)&&pp.length>=2){const md=_med(pp.map(q=>q.pe)),rt=pe/md;
+    R.push({n:4,g:"p",t:"قارن بالشركات المماثلة",v:rt<=.9?"g":rt<=1.25?"y":"r",val:"مكرر السهم "+fx(pe)+" مقابل وسيط "+fx(md)+" لـ "+pp.length+" شركات مماثلة ("+pp.map(q=>escH(q.s)).join("، ")+")",why:"قارن التقييم مع شركات مشابهة وليس مع السوق ككل. أقل من الوسيط بـ10% = جيد، حتى +25% = يحتاج حذراً، أعلى = مرتفع نسبياً."})}
+   else R.push({n:4,g:"p",t:"قارن بالشركات المماثلة",v:"n",val:pos(pe)?"لم تتوفر شركات مماثلة كافية للمقارنة":"لا يوجد مكرر ربحية موجب للمقارنة",why:"قارن التقييم مع شركات مشابهة وليس مع السوق ككل."})}
+  // 5) النمو المستقبلي (PEG)
+  {const peg=pos(pe)&&pos(growth)?pe/growth:null;
+   R.push({n:5,g:"p",t:"افهم النمو المستقبلي",v:growth==null||!pos(pe)?"n":!pos(growth)?"r":peg<=1.5?"g":peg<=2.5?"y":"r",val:"نمو تاريخي (3 سنوات) "+fx(growth)+"% · PEG "+fx(peg,2)+" · نمو الإيرادات 3 سنوات "+fx(r3)+"%"+(r5!=null?" · 5 سنوات "+fx(r5)+"%":""),why:"سعر السهم يعكس غالباً توقعات المستقبل. توقعات المحللين غير متاحة في المصدر المجاني، فاستُخدم النمو التاريخي بديلاً تقريبياً (PEG≤1.5 جيد)."})}
+  // 6) التدفقات النقدية
+  {let v="n",val="لا تتوفر بيانات التدفق النقدي";
+   if(pf!=null){if(pf<=0){v="r";val="تدفق نقدي حر سالب (P/FCF "+fx(pf)+")"}
+    else{const yl=100/pf,cv=p&&pos(eps)?(p/pf)/eps:null;v=cv==null?(yl>=3?"g":"y"):cv>=.8?"g":cv>=.5?"y":"r";val="عائد التدفق الحر "+fx(yl)+"% · P/FCF "+fx(pf)+(cv!=null?" · تحويل الأرباح إلى نقد "+fx(cv*100,0)+"%":"")}}
+   R.push({n:6,g:"q",t:"تابع التدفقات النقدية",v,val,why:"التدفقات النقدية القوية تجعل الأرباح المعلنة أكثر معنى. تحويل ≥80% من الأرباح إلى نقد = جيد."})}
+  // 7) العائد على رأس المال
+  {const a=roi!=null?roi:roe,lbl=roi!=null?"العائد على رأس المال (ROI)":"العائد على حقوق الملكية (ROE)";
+   R.push({n:7,g:"q",t:"تحقق من العائد على رأس المال",v:a==null?"n":a>=15?"g":a>=8?"y":"r",val:lbl+" "+fx(a)+"%"+(roi!=null&&roe!=null?" · ROE "+fx(roe)+"%":""),why:"الشركات التي تحقق عائداً أعلى على رأس المال تستحق غالباً تقييماً أفضل (≥15% جيد، أقل من 8% ضعيف)."})}
+  // 8) الديون والمخاطر
+  {const bad=(de!=null&&de>1.5)||(cr!=null&&cr<1)||(ic!=null&&ic<3),good=(de==null||de<=.5)&&(cr==null||cr>=1.5)&&(ic==null||ic>=8);
+   R.push({n:8,g:"q",t:"انتبه للديون والمخاطر",v:de==null&&cr==null&&ic==null?"n":bad?"r":good?"g":"y",val:"الدين/حقوق الملكية "+fx(de,2)+" · النسبة الجارية "+fx(cr,2)+" · تغطية الفوائد "+fx(ic)+"x"+(beta!=null?" · بيتا "+fx(beta,2):""),why:"ارتفاع المخاطر المالية يستدعي حذراً أكبر عند تحديد السعر المناسب."})}
+  // 9) هامش الأمان (رقم غراهام)
+  {const gn=pos(eps)&&pos(bv)?Math.sqrt(22.5*eps*bv):null,ms=gn&&p?(gn-p)/gn*100:null;
+   R.push({n:9,g:"p",t:"ابحث عن هامش أمان",v:ms==null?"n":ms>=20?"g":ms>=0?"y":"r",val:gn?"قيمة عادلة تقريبية (رقم غراهام) "+money(gn)+" مقابل السعر "+money(p)+(ms>=0?" ← هامش أمان "+fx(ms)+"%":" ← السعر أعلى من القيمة التقريبية بنحو "+fx((p/gn-1)*100,0)+"%"):"لا يمكن حساب القيمة العادلة (ربحية السهم أو القيمة الدفترية غير موجبة)",why:"الشراء بأقل من القيمة العادلة يمنحك مساحة للخطأ. رقم غراهام محافظ جداً ويقلّل غالباً من قيمة شركات النمو والتقنية؛ اعتبره حداً أدنى لا قيمة نهائية."})}
+  // 10) توقعات واقعية
+  {let v="n",val="لا تتوفر بيانات كافية";
+   if(pe!=null&&pe<=0){v="r";val="الشركة لا تحقق أرباحاً حالياً: السعر قائم كلياً على توقعات مستقبلية"}
+   else if(pe!=null){if(pe<=15){v="g";val="مكرر "+fx(pe)+": السعر لا يفترض نمواً استثنائياً"}
+    else if(!pos(growth)){v="r";val="مكرر "+fx(pe)+" لا يبرره نمو الأرباح التاريخي ("+fx(growth)+"%)"}
+    else{const gg=Math.min(growth,40),n=Math.log(pe/15)/Math.log(1+gg/100);v=n<=3?"g":n<=7?"y":"r";val="مكرر "+fx(pe)+": يلزم نمو الأرباح بنحو "+fx(gg,0)+"% سنوياً لمدة "+fx(n)+" سنة ليعود المكرر إلى 15 دون ارتفاع السعر"}}
+   R.push({n:10,g:"p",t:"اجعل توقعاتك واقعية",v,val,why:"حتى الشركة الممتازة قد تكون استثماراً سيئاً إذا دفعت سعراً مبالغاً فيه. كلما طالت مدة النمو المطلوبة لتبرير السعر زادت المخاطرة."})}
+  R.sort((a,b)=>a.n-b.n);
+  const sc=v=>v==="g"?1:v==="y"?.5:v==="r"?0:null,grp=k=>{const a=R.filter(r=>r.g===k).map(r=>sc(r.v)).filter(z=>z!=null);return a.length?{s:a.reduce((u,w)=>u+w,0),n:a.length}:null};
+  const q=grp("q"),pr=grp("p"),qa=q&&q.s/q.n>=.6,pa=pr&&pr.s/pr.n>=.6;
+  const golden=!q||!pr?"البيانات غير كافية للحكم على الجودة والسعر معاً.":qa&&pa?"شركة جيدة وبسعر يبدو مناسباً حسب هذه القواعد — لكن الحكم النهائي لك.":qa?"شركة جيدة لكن السعر يبدو مرتفعاً: الشركة الرائعة ليست تلقائياً استثماراً رائعاً، والسعر الذي تدفعه هو الأهم.":pa?"السعر يبدو منخفضاً لكن جودة الشركة تحتاج حذراً: قد يكون رخيصاً لسبب.":"الجودة والسعر دون المطلوب حسب هذه المعايير.";
+  return{R,q,pr,golden}}
+function valHTML(s,F){
+  const E=valEval(s,F),ic={g:"✅",y:"⚠️",r:"❌",n:"❓"},lab={g:"جيد",y:"يحتاج حذراً",r:"سلبي",n:"لا بيانات"},gl=g=>g?(g.s/g.n>=.7?"قوية":g.s/g.n>=.4?"متوسطة":"ضعيفة")+" ("+g.s.toFixed(1)+"/"+g.n+")":"غير متاحة";
+  return'<div class="vs"><div><b>جودة الشركة</b> <small class="hint">(القواعد 1·2·6·7·8)</small><br><span class="vb">'+gl(E.q)+'</span></div><div><b>مناسبة السعر</b> <small class="hint">(القواعد 3·4·5·9·10)</small><br><span class="vb">'+gl(E.pr)+'</span></div></div>'+
+   '<div class="vgold">💡 <b>القاعدة الذهبية:</b> '+E.golden+'</div>'+
+   '<div class="vg">'+E.R.map(r=>'<div class="vr '+r.v+'"><div class="vh"><span class="vn">'+r.n+'</span><b>'+r.t+'</b><span title="'+lab[r.v]+'">'+ic[r.v]+'</span></div><div class="vv">'+r.val+'</div><div class="vw">'+r.why+'</div></div>').join("")+'</div>'+
+   '<p class="hint">آخر تحديث للبيانات الأساسية: '+new Date(F.t).toLocaleString("ar-SA")+' · المصدر Finnhub · المعايير تقريبية وتختلف من قطاع لآخر · النمو المستخدم تاريخي لا توقعات محللين · تحليل آلي للمتابعة وليس نصيحة استثمارية.</p>'}
+function valSaveKey(){const v=($("valKi").value||"").trim();if(!v)return;$("key").value=v;try{localStorage.setItem("avk",v)}catch(e){}delete FUND[cur];loadFund(cur,true)}
+function drawVal(){const box=$("valB");if(!box||!FUND)return;const s=cur,t=$("valT");if(t)t.textContent="📋 تقييم "+(s||"السهم")+" بالقواعد العشر";
+  if(!s||!data[s]){box.innerHTML='<p class="hint">اختر سهماً لتقييمه.</p>';return}
+  const need='<p class="hint">تحتاج القواعد العشر بياناتٍ أساسية (مكرر الربحية، النمو، الديون، التدفقات…) لا يوفرها Yahoo للشارت. أدخل مفتاح Finnhub المجاني (من finnhub.io) لتفعيلها:</p><div id="valK"><input id="valKi" dir="ltr" placeholder="مفتاح Finnhub"><button class="bt" onclick="valSaveKey()">حفظ وتحميل</button></div>';
+  if(!HAS_PX&&!fhKey()){box.innerHTML=need;return}
+  const F=FUND[s];if(!F){loadFund(s);return}
+  if(F.st==="load")box.innerHTML='<p class="hint">⏳ جارٍ جلب البيانات الأساسية لـ '+escH(s)+'…</p>';
+  else if(F.st==="err")box.innerHTML=F.msg==="nokey"?need:'<p class="hint">⚠️ '+escH(F.msg)+'</p>';
+  else box.innerHTML=valHTML(s,F)}
+
 function printAll(){window.print()}
 function favPrintHTML(){
   const el=$("fav"),src=[...el.querySelectorAll("input,select")],c=el.cloneNode(true);
