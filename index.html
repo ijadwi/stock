@@ -125,7 +125,6 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
 
 .ch .lnR{stroke:var(--dn)}.ch .lnS{stroke:var(--up)}.ch .lnP{stroke:var(--ac)}.ch text.txR{fill:var(--dn)}.ch text.txS{fill:var(--up)}.ch text.txP{fill:var(--ac)}.ch .zR{fill:var(--dn);fill-opacity:.10}.ch .zS{fill:var(--up);fill-opacity:.10}.ch .wk{stroke:var(--mu);stroke-opacity:.5}
 #srTb td,#srTb th{white-space:nowrap}#srTb tr{cursor:default}
-@media print{body.pf .side,body.pf .top,body.pf .crumb,body.pf main>section:not(#fav){display:none!important}body.pf .page{margin:0}body.pf main{padding:0}body.pf #fav{border:0}}
 </style></head><body>
 <aside class="side"><a class="on">☰</a><a onclick="document.getElementById('fav').scrollIntoView()">⭐</a><a onclick="document.getElementById('banks').scrollIntoView()">🏛</a><a onclick="scrollTo(0,0)">💧</a><a>🔔</a><a>📰</a><a onclick="document.getElementById('wn').scrollIntoView()">🔄</a><a onclick="document.getElementById('cfg').scrollIntoView()">⚙️</a></aside>
 <div class="page">
@@ -151,7 +150,7 @@ td{padding:7px 6px;white-space:nowrap}tbody tr:nth-child(odd){background:var(--r
  <div class="cd" id="anC"><h2>المحللون وبيوت المال</h2><div id="an"></div></div></section>
 <section class="cd" id="fav"><div class="mh"><h2>⭐ المفضلة · محفظتي <small class="hint">· كل سهم يُضاف يُعتبر مشترى بسعره وقت الإضافة · عدّل السعر والتاريخ والكمية · «➕ شراء» و«➖ بيع» للتداول الوهمي الكامل أو الجزئي</small></h2>
  <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" onclick="favAdd()">➕ إضافة سهم</button><button class="bt" onclick="renderFav(true)">🔄 تحديث الملخص</button><button class="bt" onclick="favFile()">💾 حفظ البيانات (ملف)</button><button class="bt" onclick="favLoad()">📂 فتح ملف محفوظ</button><button class="bt" onclick="favExport()">📤 نسخ النص</button><button class="bt" onclick="favImport()">📥 استيراد</button><button class="bt" onclick="favPrint()">🖨️ طباعة المفضلة</button><button class="bt" onclick="favPDF()">📄 حفظ المفضلة PDF</button></div></div>
- <div id="favB"><p class="hint">لا توجد أسهم في المفضلة بعد. افتح أي سهم واضغط «☆ أضف للمفضلة».</p></div>
+ <p class="hint" id="favAsof"></p><div id="favB"><p class="hint">لا توجد أسهم في المفضلة بعد. افتح أي سهم واضغط «☆ أضف للمفضلة».</p></div>
  <p class="hint" style="margin-top:8px">البيانات محفوظة في متصفح هذا الجهاز فقط (استخدم التصدير والاستيراد للنقل بين الجوال والحاسوب). حسابات افتراضية للمتابعة وليست كشف حساب فعلياً، ولا تشمل العمولات أو الضرائب، وليست نصيحة استثمارية.</p></section>
 <section class="cd" id="wn"><div class="mh"><h2>🔄 انعكاس الاتجاه من هابط إلى صاعد <small class="hint">· منهج ستان واينستين (متوسط 30 أسبوعاً ≈ 150 يوم تداول)</small></h2><div class="noprint"><button class="bt" onclick="scanWein()">🔍 ماسح الانعكاس للقائمة</button></div></div>
  <div id="wnB"><p class="hint">اختر سهماً لعرض تحليل الانعكاس…</p></div><div id="wnS"></div>
@@ -388,7 +387,7 @@ async function yChart(s,range){
   if(!ix.length)throw new Error("لا توجد بيانات: "+s);
   const c=ix.map(i=>q.close[i]),v=ix.map(i=>q.volume[i]||0),hi=ix.map(i=>q.high[i]??q.close[i]),lo=ix.map(i=>q.low[i]??q.close[i]),d=ix.map(i=>new Date(ts[i]*1e3).toISOString().slice(5,10));
   const price=m.regularMarketPrice!=null?m.regularMarketPrice:c[c.length-1],pc=c.length>1?c[c.length-2]:price,vol=m.regularMarketVolume!=null?m.regularMarketVolume:v[v.length-1];
-  return{sym:s,price,chg:(price/pc-1)*100,vol,liq:price*vol,series:{c,d,v,hi,lo}}}
+  return{sym:s,price,chg:(price/pc-1)*100,vol,liq:price*vol,asof:(m.regularMarketTime||ts[ts.length-1])*1e3,series:{c,d,v,hi,lo}}}
 async function pullYahoo(){const L=wlist(),R=await Promise.allSettled(L.map(s=>yChart(s,"1mo")));
   const ok=R.filter(r=>r.status==="fulfilled").map(r=>{const{series,...o}=r.value;return o});
   if(!ok.length)throw new Error((R[0]&&R[0].reason&&R[0].reason.message||"")+" — تعذر الاتصال بـ Yahoo (قد يمنعه المتصفح CORS). جرّب Alpha Vantage أو افتح الملف من خادم محلي.");
@@ -603,7 +602,7 @@ $("go").click();
 var REG;
 function renderBanks(){renderBanks0.apply(this,arguments);bkCount()}
 function bkCount(){try{const b=BANKS.filter(x=>BR[x.rec]==="buy"||BR[x.rec]==="sb").length,h=BANKS.length-b;$("bkCnt").innerHTML=`إجمالي توصيات الخبراء: <b>${BANKS.length}</b> · شراء/زيادة وزن <b class="up">${b}</b> · حياد <b>${h}</b>`}catch(e){}}
-function drawD(){drawD0();try{extra()}catch(e){console.error(e)}try{drawSR()}catch(e){console.error(e)}}
+function drawD(){drawD0();try{extra()}catch(e){console.error(e)}try{drawSR()}catch(e){console.error(e)}try{favAsof()}catch(e){console.error(e)}}
 function strongInd(d){const c=d.c,h=d.hi||c,l=d.lo||c,v=d.v||c.map(()=>1),n=c.length;if(n<110||h.length!=n||l.length!=n)return null;
  const tr=c.map((x,i)=>i?Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])):h[i]-l[i]);
  const wil=(a,p)=>{const o=[];let s=0;a.forEach((x,i)=>{if(i<p){s+=x;o.push(i==p-1?s:0)}else o.push(o[i-1]-o[i-1]/p+x)});return o};
@@ -675,7 +674,7 @@ function srCalc(d,N){
 function srChart(d,N,Lv){
   const n0=d.c.length,o=n0-Math.min(N,n0),c=d.c.slice(o),h=(d.hi||d.c).slice(o),l=(d.lo||d.c).slice(o),dt=d.d.slice(o),n=c.length,p=Lv.p;
   const W=900,H=400,Lm=52,Rm=138,T=14,B=26,pw=W-Lm-Rm,ph=H-T-B;
-  const all=[...h,...l,...Lv.R.map(x=>x.p),...Lv.S.map(x=>x.p)];let mn=Math.min(...all),mx=Math.max(...all);const pd=(mx-mn||1)*.05;mn-=pd;mx+=pd;
+  const all=[...h,...l,p,...Lv.R.map(x=>x.p),...Lv.S.map(x=>x.p)];let mn=Math.min(...all),mx=Math.max(...all);const pd=(mx-mn||1)*.05;mn-=pd;mx+=pd;
   const X=i=>Lm+pw*(i+.5)/n,Y=v=>T+ph*(1-(v-mn)/(mx-mn)),z=Lv.atr*.25;
   let s=`<svg viewBox="0 0 ${W} ${H}" class="ch" style="min-width:640px">`;
   for(let k=0;k<=4;k++){const y=T+ph*k/4;s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${y}" y2="${y}" stroke="#ffffff14"/><text x="${Lm-6}" y="${y+4}" text-anchor="end" fill="#9aa1bd" font-size="11">${(mx-(mx-mn)*k/4).toFixed(2)}</text>`}
@@ -719,12 +718,26 @@ function favLoad(){const i=document.createElement("input");i.type="file";i.accep
     r.readAsText(f)};i.click()}
 
 // ---------- المفضلة: طباعة وحفظ PDF مستقلان عن بقية الصفحة ----------
-function printAll(){document.body.classList.remove("pf");window.print()}
+function printAll(){window.print()}
+function favPrintHTML(){
+  const el=$("fav"),src=[...el.querySelectorAll("input,select")],c=el.cloneNode(true);
+  [...c.querySelectorAll("input,select")].forEach((n,i)=>{const s=document.createElement("span");s.textContent=src[i]?src[i].value:"";n.replaceWith(s)});
+  c.querySelectorAll(".noprint").forEach(n=>n.remove());
+  const css=[...document.querySelectorAll("style")].map(x=>x.textContent).join("\n"),sig=document.querySelector("footer.sig"),
+   info='<p class="hint">طُبعت: '+new Date().toLocaleString("ar-SA")+'</p>';
+  return'<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>المفضلة_'+today()+'</title><style>'+css+'</style><style>body{margin:12px}.page{margin:0!important}</style></head><body class="pm"><div class="page"><main>'+c.outerHTML+info+'</main>'+(sig?sig.outerHTML:"")+'</div></body></html>'}
 function favPrint(){
   if(!Object.keys(FAV.open).length&&!FAV.closed.length){$("msg").textContent="⚠️ لا توجد أسهم في المفضلة لطباعتها";return}
-  const b=document.body,t=document.title;b.classList.add("pf");document.title="المفضلة_"+today();
-  const done=()=>{b.classList.remove("pf");document.title=t;window.removeEventListener("afterprint",done)};
-  window.addEventListener("afterprint",done);setTimeout(()=>window.print(),60)}
+  const f=document.createElement("iframe");f.style.cssText="position:fixed;left:-9999px;top:0;width:1100px;height:800px;border:0";
+  let done=false;f.srcdoc=favPrintHTML();
+  f.onload=()=>{if(done)return;done=true;setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){$("msg").textContent="⚠️ تعذّرت الطباعة: "+e.message}setTimeout(()=>f.remove(),6e4)},250)};
+  document.body.appendChild(f)}
+// وقت آخر سعر للأسهم المفضلة (يكشف الأسعار القديمة)
+function favAsof(){const el=$("favAsof");if(!el)return;
+  const ts=Object.keys(FAV.open).map(z=>data[z]&&data[z].asof).filter(Boolean);
+  if(!ts.length){el.textContent="";return}
+  const o=Math.min(...ts),old=(Date.now()-o)/36e5>30;
+  el.textContent="🕒 وقت آخر سعر: "+new Date(o).toLocaleString("ar-SA")+(old?" — ⚠️ ليس لحظياً: السوق مغلق أو السعر من ملف محفوظ":" — لحظي")}
 function favPDF(){
   if(!Object.keys(FAV.open).length&&!FAV.closed.length){$("msg").textContent="⚠️ لا توجد أسهم في المفضلة لحفظها";return}
   if(typeof html2pdf==="undefined")return favPrint();
